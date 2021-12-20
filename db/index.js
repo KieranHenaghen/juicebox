@@ -3,11 +3,19 @@ const { Client } = require('pg');
 const client = new Client('postgres://localhost:5432/juicebox-dev');
 
 async function getAllUsers() {
-    const { rows } = await client.query(
-        `SELECT id, username, name, location, active
-        FROM users;
-    `);
-    return rows;
+    try {
+        const { rows } = await client.query(`
+            SELECT id, username, name, location, active
+            FROM users;
+        `);
+        console.log("Finished getting all users!")
+        return rows;
+    }
+    catch (error) {
+        console.error("Error getting all users!")
+        throw error;
+    }
+
 }
 
 async function createUser({ 
@@ -19,7 +27,7 @@ async function createUser({
     try {
         const { rows: [ user ] } = await client.query(`
             INSERT INTO users(username, password, name, location)
-            VALUES (${ username }, ${ password }, ${ name }, ${ location })
+            VALUES ($1, $2, $3, $4)
             ON CONFLICT (username) DO NOTHING
             RETURNING *;
         `, [username, password, name, location]);
@@ -58,15 +66,19 @@ async function createPost({
     tags = []
 }) {
     try {
+        console.log("Creating post...")
         const { rows: [ post ] } = await client.query(`
             INSERT INTO posts("authorId", title, content)
-            VALUES (${ authorId }, ${ title }, ${ content })
+            VALUES ($1, $2, $3)
             RETURNING *;
         `, [authorId, title, content]);
+        console.log("Still creating post...")
         const tagList = await createTags(tags);
+        console.log("Basically done now.")
         return await addTagsToPost(post.id, tagList);
     }
     catch (error) {
+        console.error("Error creating post!")
         throw error;
     }
 }
@@ -103,10 +115,10 @@ async function updatePost(postId, fields = {
             DELETE FROM post_tags
             WHERE "tagId"
             NOT IN (${ tagListIdString })
-            AND "postId"=${ postId };
+            AND "postId"=$1;
         `, [postId]);
         await addTagsToPost(postId, tagList);
-        return await getPostsById(postId);
+        return await getPostById(postId);
     }
     catch (error) {
         throw error;
@@ -177,14 +189,16 @@ async function createTags(tagList) {
     const selectValues = tagList.map(
         (_, index) => `$${index + 1}`).join(', ');
     try {
-        const { rows } = await client.query(`
+        await client.query(`
             INSERT INTO tags(name)
             VALUES (${ insertValues })
-            ON CONFLICT (name) DO NOTHING; 
+            ON CONFLICT (name) DO NOTHING;   
+        `, tagList)
+        const { rows } = await client.query(`
             SELECT * FROM tags
             WHERE name
-            IN (${ selectValues });   
-        `)
+            IN (${ selectValues });
+        `, tagList)
         return rows;
     }
     catch (error) {
@@ -196,7 +210,7 @@ async function createPostTag(postId, tagId) {
     try {
         await client.query(`
             INSERT INTO post_tags("postId", "tagId")
-            VALUES (${ postId }, ${ tagId })
+            VALUES ($1, $2)
             ON CONFLICT ("postId", "tagId") DO NOTHING;        
         `, [postId, tagId]);
     }
@@ -210,18 +224,18 @@ async function getPostById(postId) {
         const { rows: [ post ] } = await client.query(`
             SELECT *
             FROM posts
-            WHERE id=${ postId };        
+            WHERE id=$1;        
         `, [postId]);
         const { rows: tags } = await client.query(`
             SELECT tags.*
             FROM tags
-            JOIN post_tags ON tags.ide=post_tags."tagId"
-            WHERE post_tags."postId"=${ postId };
+            JOIN post_tags ON tags.id=post_tags."tagId"
+            WHERE post_tags."postId"=$1;
         `, [postId]);
         const { rows: [ author ] } = await client.query(`
             SELECT id, username, name, location
             FROM users
-            WHERE id=${ post.authorId };
+            WHERE id=$1;
         `, [post.authorId]);
         post.tags = tags;
         post.author = author;
