@@ -8,7 +8,6 @@ async function getAllUsers() {
             SELECT id, username, name, location, active
             FROM users;
         `);
-        console.log("Finished getting all users!")
         return rows;
     }
     catch (error) {
@@ -66,15 +65,12 @@ async function createPost({
     tags = []
 }) {
     try {
-        console.log("Creating post...")
         const { rows: [ post ] } = await client.query(`
             INSERT INTO posts("authorId", title, content)
             VALUES ($1, $2, $3)
             RETURNING *;
         `, [authorId, title, content]);
-        console.log("Still creating post...")
         const tagList = await createTags(tags);
-        console.log("Basically done now.")
         return await addTagsToPost(post.id, tagList);
     }
     catch (error) {
@@ -143,7 +139,7 @@ async function getAllPosts() {
 
 async function getPostsByUser(userId) {
     try {
-        const { rows: postIds } = client.query(`
+        const { rows: postIds } = await client.query(`
             SELECT id
             FROM posts
             WHERE "authorId"=${ userId };
@@ -151,7 +147,6 @@ async function getPostsByUser(userId) {
         const posts = await Promise.all(postIds.map(
             post => getPostById( post.id )
         ));
-  
         return posts;
     } 
     catch (error) {
@@ -221,6 +216,7 @@ async function createPostTag(postId, tagId) {
 
 async function getPostById(postId) {
     try {
+        console.log("Getting the post by id")
         const { rows: [ post ] } = await client.query(`
             SELECT *
             FROM posts
@@ -243,6 +239,7 @@ async function getPostById(postId) {
         return post;
     }
     catch (error) {
+        console.error("Failed getting post by id.")
         throw error;
     }
 }
@@ -267,7 +264,7 @@ async function getPostsByTagName(tagName) {
             FROM posts
             JOIN post_tags ON posts.id=post_tags."postId"
             JOIN tags ON tags.id=post_tags."tagId"
-            WHERE tags.name=${ tagName };        
+            WHERE tags.name=$1;        
         `, [tagName]);
         return await Promise.all(postIds.map(
             post => getPostById(post.id)

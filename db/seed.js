@@ -95,7 +95,6 @@ async function createInitialPosts() {
     try {
         console.log("Starting to create posts...")
         const [albert, sandra, glamgal] = await getAllUsers();
-        console.log("Got all users.")
         await createPost({
             authorId: albert.id,
             title: "First Post",
@@ -167,8 +166,8 @@ async function testDB() {
         });
         console.log("Result:", updatePostTagsResult);
         console.log("Calling getUserById with 1");
-        // const albert = await getUserById(1);
-        // console.log("Result:", albert);
+        const albert = await getUserById(1);
+        console.log("Result:", albert);
         console.log("Calling getPostsByTagName with #happy");
         const postsWithHappy = await getPostsByTagName("#happy");
         console.log("Result:", postsWithHappy);
