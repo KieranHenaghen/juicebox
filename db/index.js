@@ -2,10 +2,17 @@ const { Client } = require('pg');
 const PORT = 3000;
 const express = require('express');
 const server = express();
+const morgan = require('morgan');
+server.use(morgan('dev'));
+
+server.use(express.json());
+
 const apiRouter = require('./api');
 server.use('/api', apiRouter);
 
 const client = new Client('postgres://localhost:5432/juicebox-dev');
+const { client } = require('./db');
+client.connect();
 
 server.listen(PORT, () => {
     console.log('The server is up on port', PORT)
@@ -292,6 +299,39 @@ async function getPostsByTagName(tagName) {
     }
 }
 
+async function getAllTags() {
+    try {
+        const { rows: tagIds } = await client.query(`
+            SELECT *
+            FROM tags;
+        `);
+        const tags = await Promise.all(tagIds.map(
+            tag => getTagById( tag.id )
+        ));
+
+        return tags;
+    } catch (error) {
+        throw error;
+    }
+}
+
+async function getTagById(tagId) {
+    try {
+        const { rows: [ tag ] } = await client.query(`
+            SELECT *
+            FROM tags
+            WHERE id=$1;        
+        `, [tagId]);
+        
+
+        return tag;
+    }
+    catch (error) {
+        console.error("Failed getting tag by id.")
+        throw error;
+    }
+}
+
 module.exports = {
     client,
     getAllUsers,
@@ -307,4 +347,6 @@ module.exports = {
     getPostById,
     addTagsToPost,
     getPostsByTagName,
+    getAllTags,
+    getTagById,
 }
