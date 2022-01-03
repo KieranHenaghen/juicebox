@@ -8,7 +8,7 @@ usersRouter.use((req, res, next) => {
   next();
 });
 
-usersRouter.get('/', (req, res) => {
+usersRouter.get('/', async (req, res) => {
     const users = await getAllUsers();
     res.send({
         users

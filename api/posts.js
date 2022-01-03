@@ -8,7 +8,7 @@ postsRouter.use((req, res, next) => {
   next();
 });
 
-postsRouter.get('/', (req, res) => {
+postsRouter.get('/', async (req, res) => {
     const posts = await getAllPosts();
     res.send({
         posts

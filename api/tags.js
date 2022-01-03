@@ -8,7 +8,7 @@ tagsRouter.use((req, res, next) => {
   next();
 });
 
-tagsRouter.get('/', (req, res) => {
+tagsRouter.get('/', async (req, res) => {
     const tags = await getAllTags();
     res.send({
         tags
