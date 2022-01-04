@@ -19,7 +19,11 @@ tagsRouter.get('/:tagName/posts', async (req, res, next) => {
   encodeURIComponent({ tagName }) = { tagName }
   const { tagName } = req.params;
   try {
-    const posts = await getPostsByTagName(req.params);
+    const allPosts = await getPostsByTagName(req.params);
+    const posts = allPosts.filter(post => {
+      return post.active || (req.user && post.author.id === req.user.id);
+    });
+
     res.send({ posts: posts });
   }
   catch ({ name, message }) {
