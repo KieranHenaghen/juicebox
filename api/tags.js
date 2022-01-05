@@ -16,7 +16,6 @@ tagsRouter.get('/', async (req, res) => {
 });
 
 tagsRouter.get('/:tagName/posts', async (req, res, next) => {
-  encodeURIComponent({ tagName }) = { tagName }
   const { tagName } = req.params;
   try {
     const allPosts = await getPostsByTagName(req.params);
