@@ -21,7 +21,7 @@ postsRouter.get('/', async (req, res) => {
     });
   }
   catch ({ name, message }) {
-    next({ name, message })
+    next({ name, message });
   }
 });
 
@@ -42,11 +42,11 @@ postsRouter.post('/', requireUser, async (req, res, next) => {
       res.send({ post });
     }
     else {
-      next({ name: "NoPostError", message: "Post wasn't returned."})
+      next({ name: "NoPostError", message: "Post wasn't returned."});
     }
   }
   catch ({ name, message }) {
-    next({ name, message })
+    next({ name, message });
   }
 });
 
@@ -73,12 +73,12 @@ postsRouter.patch('/:postId', requireUser, async (req, res, next) => {
 
     if (originalPost.author.id === req.user.id) {
       const updatedPost = await updatePost(postId, updateFields);
-      res.send({ post: updatedPost })
+      res.send({ post: updatedPost });
     } else {
       next({
         name: 'UnauthorizedUserError',
         message: 'You cannot update a post that is not yours'
-      })
+      });
     }
   } catch ({ name, message }) {
     next({ name, message });
@@ -104,7 +104,7 @@ postsRouter.delete('/:postId', requireUser, async (req, res, next) => {
     }
 
   } catch ({ name, message }) {
-    next({ name, message })
+    next({ name, message });
   }
 });
 
